@@ -15,8 +15,8 @@ function voice_grainloop:new(voice_num)
   o.midi_in_channel = 1 -- input: assume first midi channel
 
   -- user interface stuff
-  o.live_mode = true -- play from files by default
-  o.live_buffer_state = 0 -- 0 stopped, 1 play, 2 armed, 3 record, 4 overdub (future)
+  o.live_mode = false -- play from files by default
+  o.live_buffer_state = 1 -- 0 stopped, 1 play, 2 armed, 3 record, 4 overdub (future)
   o.live_buffer_empty = true
   o.param_shift_key = false -- shift key for selecting params using grid
   o.arc_param_edit = false -- behavior of the arc dial
@@ -120,7 +120,6 @@ function voice_grainloop:live_buffer_stop()
   end
 end
 
-
 function voice_grainloop:live_buffer_record_arm()
   if self.live_mode == true then
     self.live_buffer_state = 2
@@ -146,6 +145,12 @@ function voice_grainloop:live_buffer_record_stop()
      self.live_buffer_empty = false
   end
 end
+
+function voice_grainloop:reset_pos()
+  engine.pos(self.v, 0.0)
+  params:set(self.param_prefix.."pos", 0.0)
+end
+
 
 function voice_grainloop:get_param_id(i)
   return(self.synth_param_ids[i])

@@ -2,7 +2,7 @@
 ---multi-voice groovebox
 
 engine.name = "grainloops"
-voice_grainloop = include("grainloop/lib/voice_grainloop")
+voice_grainloop = include("dawn/lib/voice_grainloop")
 
 -- input: arc required
 local a = arc.connect(1)
@@ -32,16 +32,16 @@ local sc_rate = 1
 local curr_file = 1
 local filepath = _path.dust.."audio/yoyu2/"
 local filenames = {"nepalese bowls 1.1 2x.wav",
-      "mori closeup short 4x.wav",
-      "mmad/dpa ocean roar.wav",
-      "pb mid beach short 4x.wav",
-      "mmad/birds1 short.wav",
+      "nepalese bowls 2.1.wav",
       "nepalese bowls rev 2.2.wav",
       "nepalese bowls hit.wav",
-      "nepalese bowls 2.1.wav",
+      "mori closeup short 4x.wav",
+      "pb mid beach short 4x.wav",
       "mmad/broken seagulls and waves.wav",
-      "mmad/child laughing.wav",
       "mmad/gentle wave loop.wav",
+      "mmad/child laughing.wav",
+      "mmad/hospital.wav",
+      "mmad/birds1 short.wav",
       "mmad/wind chimes.wav",
       "mmad/wind chimes up.wav",
       "mmad/mori splash 1.wav",
@@ -176,8 +176,8 @@ function redraw()
   -- voice params
   for i=1, num_voices do
     v = voices[i]
-    y_offset = (i - 1) * 10
-
+    y_offset = (i - 1) * 16 + 2
+ 
     if i == curr_voice then
       screen.level(15)
     else
@@ -185,18 +185,18 @@ function redraw()
     end
 
     -- show on/off indicator
-    screen.move(1, y_offset + 25)
+    screen.move(1, y_offset + 10)
     if v:get_param("play") == 1 then screen.text("-") else screen.text("o") end
 
     -- show transport indicator
-    screen.move(8, y_offset + 25)
+    screen.move(8, y_offset + 10)
     if voices[i].live_mode == false then
       screen.text("f")
     else
       if v.live_buffer_state == 0 then
-        screen.text("-")
+        screen.text("b")
       elseif v.live_buffer_state == 1 then
-        screen.text("l")
+        screen.text("b")
       elseif v.live_buffer_state == 2 then
         screen.text("A")
       elseif v.live_buffer_state == 3 then
@@ -205,15 +205,20 @@ function redraw()
     end
     
     -- show param label and value
-    screen.move(16, y_offset + 25)
+    screen.move(16, y_offset + 10)
     p = v:get_param_id(v.curr_synth_param)
     screen.text(p)
-    screen.move(128, y_offset + 25)
+    screen.move(128, y_offset + 10)
     screen.text_right(string.format("%.3f", v:get_param(p)))
+    
+    -- filename
+    screen.move(16, y_offset + 18)
+    n = get_sample_name(v:get_param("sample"))
+    screen.text(n)
   end
   
   -- show curr filename
-  screen.move(16, 55)
+  screen.move(1, 62)
   screen.level(15)
   screen.text(filenames[curr_file])
 
@@ -326,7 +331,12 @@ function grid_key(x, y, z)
       end
       -- handle voice on/off toggle
       if z==1 and xx==4 and y==8 then
-        if v:get_param("play") == 2 then v:set_voice_state(false) else v:set_voice_state(true) end
+        if v:get_param("play") == 2 then 
+          v:set_voice_state(false) 
+        else 
+          v:reset_pos()
+          v:set_voice_state(true) 
+        end
       end
 
       -- handle snapshot function key for saving and recall
@@ -570,7 +580,7 @@ function grid_refresh()
     end
 
     -- on/off
-    if v:get_param("play") == 2 then g:led(4 + x_offset, 8, 15) else g:led(4 + x_offset, 8, 4) end
+    if v:get_param("play") == 2 then g:led(4 + x_offset, 8, 15*flash_state) else g:led(4 + x_offset, 8, 4) end
 
     -- snap write button
     if snap_write[vnum] == true then g:led((vnum-1)*4 + 2, 8, 15) end
@@ -627,4 +637,25 @@ function get_file_length(file)
   else print "read_wav(): file not found" end
   return dur
 end
+
+-- get_sample_name
+--
+-- UI helper function
+--
+function get_sample_name(str)
+  -- strips the path and extension from filenames
+  -- if filename is over 15 chars, returns a folded filename
+  local long_name = string.match(str, "[^/]*$")
+  local short_name = string.match(long_name, "(.+)%..+$")
+  if short_name == nil then short_name = "(no file)" end
+  if string.len(short_name) >= 25 then
+    return string.sub(short_name, 1, 11) .. '...' .. string.sub(short_name, -11)
+  else
+    return short_name
+  end
+end
+
+
+
+
 
